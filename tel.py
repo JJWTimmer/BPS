@@ -38,7 +38,7 @@ def process_clients():
       message = data.split(',')
       str = ','.join(message[2:15])
 
-      print "%s: IMEI = %s" % (time.localtime(), message[17][6:])
+      print "%s: IMEI = %s" % (time.strftime("%Y-%m-%d %H:%M%S", time.localtime()), message[17][6:])
       if chk_chksum(str):
         print "GPS Data OK"
         
