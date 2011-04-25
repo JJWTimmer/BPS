@@ -37,6 +37,7 @@ def process_clients():
       data = client.get_command()
       message = data.split(',')
       str = ','.join(message[2:15])
+
       print "%s: IMEI = %s" % (time.time(), message[17][6:])
       if chk_chksum(str):
         print "GPS Data OK"
@@ -76,9 +77,15 @@ def process_clients():
         output = {}
         output['id'] = message[17][6:]
         output['timestamp'] = timestamp
+<<<<<<< HEAD
+        output['latitude'] = "%f" % lat
+        output['longitude'] = "%f" % lon
+        output['speed'] = "%f" % speed
+=======
         output['latitude'] = str(lat)
         output['longitude'] = str(lon)
         output['speed'] = str(speed)
+>>>>>>> 8414ab4719e5ffb6873e70061391f5dab24d7adb
         output['direction'] = message[10]
 
         enc = json.JSONEncoder(indent = 4)
