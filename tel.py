@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from miniboa import TelnetServer
-import urllib2, time, socket
+import urllib2, time, socket, json, urllib
 
 #globals
 JSON_URL = "http://www.batavierenrace.nl/cdb/gpsdata/rvd2011.php"
@@ -38,7 +38,7 @@ def process_clients():
       message = data.split(',')
       str = ','.join(message[2:15])
 
-      print "%s: IMEI = %s" % (time.time(), message[17][6:])
+      print "%s: IMEI = %s" % (time.localtime(), message[17][6:])
       if chk_chksum(str):
         print "GPS Data OK"
         
@@ -46,7 +46,7 @@ def process_clients():
         # begin country retrieval      
         url = "http://api.geonames.org/countryCode?lat=%f&lng=%f&username=%s" % (float(message[5])/100,float(message[7])/100, GEONAMES_USERNAME)
         response = urllib2.urlopen(url) 
-        country = response.read()
+        country = response.read().strip()
         print "Countrycode = %s" % country
         # end country retrieval
         #===============
@@ -77,15 +77,9 @@ def process_clients():
         output = {}
         output['id'] = message[17][6:]
         output['timestamp'] = timestamp
-<<<<<<< HEAD
         output['latitude'] = "%f" % lat
         output['longitude'] = "%f" % lon
         output['speed'] = "%f" % speed
-=======
-        output['latitude'] = str(lat)
-        output['longitude'] = str(lon)
-        output['speed'] = str(speed)
->>>>>>> 8414ab4719e5ffb6873e70061391f5dab24d7adb
         output['direction'] = message[10]
 
         enc = json.JSONEncoder(indent = 4)
@@ -94,7 +88,7 @@ def process_clients():
         req = urllib2.Request(JSON_URL, json_out)
         try:
           response = urllib2.urlopen(req)
-        except HTTPError, e:
+        except urllib2.HTTPError, e:
           print e.code
           print e.read()
 
