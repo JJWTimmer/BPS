@@ -5,7 +5,7 @@ name=Sony Ericsson W850i
 
 [smsd]
 Service = mysql
-PIN = 3636
+PIN = 1234
 LogFile = syslog
 User = smsd_usr
 Password = smsd_pw

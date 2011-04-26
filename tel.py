@@ -22,7 +22,7 @@ def chk_chksum(gprmc_str):
   
   return hex(chk).lower() == ref.lower()
 
-#
+
 def my_on_connect(client):
   print "client connected: %s" % client.address
   CLIENT_LIST.append(client)
@@ -90,7 +90,6 @@ def process_clients():
           response = urllib2.urlopen(req)
         except urllib2.HTTPError, e:
           print e.code
-          print e.read()
 
         # end json
         #===============
@@ -100,7 +99,8 @@ def process_clients():
 #===============================================================
 
 if __name__ == "__main__":
-  server = TelnetServer(port=9999, address=socket.gethostbyname(socket.gethostname()), on_connect=my_on_connect, on_disconnect=my_on_disconnect)
+  #server = TelnetServer(port=9999, address=socket.gethostbyname(socket.gethostname()), on_connect=my_on_connect, on_disconnect=my_on_disconnect)
+  server = TelnetServer(port=9999, address='192.168.2.137', on_connect=my_on_connect, on_disconnect=my_on_disconnect)
   print "\n\nStarting server on port %d.  CTRL-C to interrupt.\n" % server.port
   while True:
       server.poll()

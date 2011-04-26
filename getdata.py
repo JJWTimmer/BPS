@@ -36,36 +36,13 @@ def process_clients():
     if client.active and client.cmd_ready:
       data = client.get_command()
       
-      with f = open('data.txt', 'w'):
+      with open('data.txt', 'w') as f:
         f.write(data)
       
       message = data.split(',')
       str = ','.join(message[2:15])
 
-      print "%s: IMEI = %s" % (time.strftime("%Y-%m-%d %H:%M%S", time.localtime()), message[17][6:])
-      if chk_chksum(str):
-        print "GPS Data OK"
-        
-        #===============
-        # begin country retrieval      
-        url = "http://api.geonames.org/countryCode?lat=%f&lng=%f&username=%s" % (float(message[5])/100,float(message[7])/100, GEONAMES_USERNAME)
-        response = urllib2.urlopen(url) 
-        country = response.read().strip()
-        print "Countrycode = %s" % country
-        # end country retrieval
-        #===============
-        
-        
-        #===============
-        # begin battery calculation
-        bat =  float(message[20][2:6]) - 3.65
-        rest = bat / (4.15 - 3.65) * 100
-
-        print "battery = %.1f%%" % rest
-        
-        # end battery calculation
-        #===============
-        
+      if chk_chksum(str)
         #================
         # start json object building            
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
