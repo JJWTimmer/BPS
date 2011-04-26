@@ -42,7 +42,7 @@ def process_clients():
       message = data.split(',')
       str = ','.join(message[2:15])
 
-      if chk_chksum(str)
+      if chk_chksum(str):
         #================
         # start json object building            
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
