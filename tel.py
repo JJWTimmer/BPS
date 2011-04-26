@@ -75,7 +75,7 @@ def process_clients():
         speed = 1.85 * float(message[9])
 
         output = {}
-        output['id'] = message[17][6:]
+        output['id'] = int(message[17][6:])
         output['timestamp'] = timestamp
         output['latitude'] = "%f" % lat
         output['longitude'] = "%f" % lon
