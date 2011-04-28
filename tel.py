@@ -11,6 +11,15 @@ JSON_DOMAIN = "www.batavierenrace.nl"
 JSON_PATH = "/cdb/gpsdata/rvd2011.php"
 GEONAMES_USERNAME = "batapositioning"
 CLIENT_LIST = []
+MAILER = None
+
+#read config file
+def load_configuration(self, config_file):
+    file = open(config_file)
+    config = json.load(file)
+    file.close()
+
+    return config
 
 # gps checksum calc
 def chk_chksum(gprmc_str):
@@ -65,7 +74,7 @@ def process_clients():
         print "battery = %.1f%%" % rest
 
         if rest < 200:
-          mailer.low_battery(message[17][6:])
+          MAILER.low_battery(message[17][6:])
         
         # end battery calculation
         #===============
@@ -108,8 +117,11 @@ def process_clients():
 #===============================================================
 
 if __name__ == "__main__":
-  server = TelnetServer(port=9999, address=socket.gethostbyname(socket.gethostname()), on_connect=my_on_connect, on_disconnect=my_on_disconnect)
+  config = load_configuration(os.path.dirname(__file__) + os.sep + 'config.json')
+  MAILER = mailer(config['from_address'], config['notify'])
+  server = TelnetServer(port=config['port'], address=socket.gethostbyname(socket.gethostname()), on_connect=my_on_connect, on_disconnect=my_on_disconnect)
   #server = TelnetServer(port=9999, address='192.168.2.137', on_connect=my_on_connect, on_disconnect=my_on_disconnect)
+  
   print "\n\nStarting server on port %d.  CTRL-C to interrupt.\n" % server.port
   while True:
       server.poll()

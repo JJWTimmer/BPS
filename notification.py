@@ -1,23 +1,19 @@
-# Import smtplib for the actual sending function
 import smtplib
-
-# Import the email modules we'll need
 from email.mime.text import MIMEText
 
-# Open a plain text file for reading.  For this example, assume that
-# the text file contains only ASCII characters.
-fp = 
-# Create a text/plain message
-msg = MIMEText(fp.read()
+class mailer(object):
+  def __init__(self, send_addr, recvs):
+    self.send_addr = send_addr
+    self.recvs = recvs
+    
+  def low_battery(self, imei):
+    msg = MIMEText("LOW BATTERY")
+    
+    msg['Subject'] = 'BATTERY OF GPS WITH IMEI %s IS RUNNING LOW' % imei
+    msg['From'] = self.send_addr
+    msg['To'] = ','.join(self.recvs)
 
-# me == the sender's email address
-# you == the recipient's email address
-msg['Subject'] = 'The contents of %s' % textfile
-msg['From'] = me
-msg['To'] = you
-
-# Send the message via our own SMTP server, but don't include the
-# envelope header.
-s = smtplib.SMTP()
-s.sendmail(me, [you], msg.as_string())
-s.quit()
+  def send(self, msg)
+    s = smtplib.SMTP()
+    s.sendmail(self.send_addr, self.recvs, msg.as_string())
+    s.quit()

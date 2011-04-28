@@ -1,0 +1,5 @@
+{
+    "port" : 9999,
+    "from_address" : "bps@domain.com",
+    "notify" : {"admin@domain.com"}
+}
