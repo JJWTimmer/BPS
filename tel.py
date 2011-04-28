@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 from miniboa import TelnetServer
-import urllib2, time, socket, json, urllib
+import urllib2, time, socket, json, httplib
+from datetime import datetime, timedelta
+
+from notification import mailer
+
 
 #globals
-JSON_URL = "http://www.batavierenrace.nl/cdb/gpsdata/rvd2011.php"
+JSON_DOMAIN = "www.batavierenrace.nl"
+JSON_PATH = "/cdb/gpsdata/rvd2011.php"
 GEONAMES_USERNAME = "batapositioning"
 CLIENT_LIST = []
 
@@ -58,13 +63,17 @@ def process_clients():
         rest = bat / (4.15 - 3.65) * 100
 
         print "battery = %.1f%%" % rest
+
+        if rest < 200:
+          mailer.low_battery(message[17][6:])
         
         # end battery calculation
         #===============
         
         #================
-        # start json object building            
-        timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        # start json object building    
+        delta = timedelta(minutes=1)
+        timestamp = (datetime.utcnow()-delta).isoformat()
         print "timestamp = %s" % timestamp
 
         lat = float(message[5])
@@ -75,7 +84,7 @@ def process_clients():
         speed = 1.85 * float(message[9])
 
         output = {}
-        output['id'] = int(message[17][6:])
+        output['id'] = message[17][6:]
         output['timestamp'] = timestamp
         output['latitude'] = "%f" % lat
         output['longitude'] = "%f" % lon
@@ -85,11 +94,11 @@ def process_clients():
         enc = json.JSONEncoder(indent = 4)
         json_out = enc.encode(output)
            
-        req = urllib2.Request(JSON_URL, json_out)
-        try:
-          response = urllib2.urlopen(req)
-        except urllib2.HTTPError, e:
-          print e.code
+        headers = {"Content-type": "application/json", "Accept": "application/json; charset=utf8"}
+        conn = httplib.HTTPConnection(JSON_DOMAIN)
+        conn.request("POST", JSON_PATH, json_out, headers)
+        response = conn.getresponse()
+        print "%s %s" %(response.status, response.reason)
 
         # end json
         #===============
