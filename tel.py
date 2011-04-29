@@ -4,14 +4,14 @@ import urllib2, time, socket, json, httplib, os
 from datetime import datetime, timedelta
 
 from notification import mailer
-
+import gps
 
 #globals
-JSON_DOMAIN = "www.batavierenrace.nl"
-JSON_PATH = "/cdb/gpsdata/rvd2011.php"
-GEONAMES_USERNAME = "batapositioning"
-CLIENT_LIST = []
+JSON_DOMAIN = None
+JSON_PATH = None
+GEONAMES_USERNAME = None
 MAILER = None
+CLIENT_LIST = []
 
 #read config file
 def load_configuration(config_file):
@@ -20,22 +20,6 @@ def load_configuration(config_file):
     file.close()
 
     return config
-
-# gps checksum calc
-def chk_chksum(gprmc_str):
-  chk = ''
-  ref = "0x%s" % gprmc_str[-2:]
-  
-  for c in gprmc_str:
-    if c == '*':
-      break
-    elif chk == '':
-      chk = ord(c)
-    else:
-      chk = chk ^ ord(c)
-  
-  return hex(chk).lower() == ref.lower()
-
 
 def my_on_connect(client):
   print "client connected: %s" % client.address
@@ -50,10 +34,11 @@ def process_clients():
     if client.active and client.cmd_ready:
       data = client.get_command()
       message = data.split(',')
-      str = ','.join(message[2:15])
 
-      print "%s: IMEI = %s" % (time.strftime("%Y-%m-%d %H:%M%S", time.localtime()), message[17][6:])
-      if chk_chksum(str):
+      print "%s:\n IMEI = %s" % (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), message[17][6:])
+      
+      gps_str = ','.join(message[2:15])
+      if gps.chk_chksum(gps_str):
         print "GPS Data OK"
         
         #===============
@@ -73,8 +58,8 @@ def process_clients():
 
         print "battery = %.1f%%" % rest
 
-        if rest < 200:
-          print "sending mail"
+        if float(message[20][2:6]) < 3.7:
+          print "WARNING, LOW BATTERY"
           MAILER.low_battery(message[17][6:])
         
         # end battery calculation
@@ -103,7 +88,7 @@ def process_clients():
 
         enc = json.JSONEncoder(indent = 4)
         json_out = enc.encode(output)
-           
+        
         headers = {"Content-type": "application/json", "Accept": "application/json; charset=utf8"}
         conn = httplib.HTTPConnection(JSON_DOMAIN)
         conn.request("POST", JSON_PATH, json_out, headers)
@@ -119,7 +104,12 @@ def process_clients():
 
 if __name__ == "__main__":
   config = load_configuration('config.json')
+  
+  JSON_DOMAIN = config['json_domain']
+  JSON_PATH = config['json_path']
+  GEONAMES_USERNAME = config['geonames_username']
   MAILER = mailer(config['from_address'], config['notify'])
+  
   server = TelnetServer(port=config['port'], address=socket.gethostbyname(socket.gethostname()), on_connect=my_on_connect, on_disconnect=my_on_disconnect)
   #server = TelnetServer(port=9999, address='192.168.2.137', on_connect=my_on_connect, on_disconnect=my_on_disconnect)
   

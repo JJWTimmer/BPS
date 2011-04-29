@@ -17,6 +17,5 @@ class mailer(object):
 
   def send(self, msg):
     s = smtplib.SMTP('127.0.0.1')
-    s.set_debuglevel(1)
     s.sendmail(self.send_addr, self.recvs, msg.as_string())
     s.quit()

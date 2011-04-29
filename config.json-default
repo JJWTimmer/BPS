@@ -1,5 +1,8 @@
 {
     "port" : 9999,
     "from_address" : "bps@domain.com",
-    "notify" : {"admin@domain.com"}
+    "notify" : {"admin@domain.com"},
+    "json_domain" : "www.batavierenrace.nl",
+    "json_path" : "/path/to/script.php",
+    "geonames_username" : "username"
 }
