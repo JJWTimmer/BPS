@@ -40,10 +40,23 @@ def process_clients():
       gps_str = ','.join(message[2:15])
       if gps.chk_chksum(gps_str):
         print "GPS Data OK"
+        #===============
+        # calc location
+        
+        lat = float(message[5])
+        lon = float(message[7])
+
+        lat = int(lat / 100) + ((lat - (int((lat / 100)) * 100)) / 60)
+        lon = int(lon / 100) + ((lon - (int((lon / 100)) * 100)) / 60)
+
+        
+        # end calc location
+        #===============
+        
         
         #===============
         # begin country retrieval      
-        url = "http://api.geonames.org/countryCode?lat=%f&lng=%f&username=%s" % (float(message[5])/100,float(message[7])/100, GEONAMES_USERNAME)
+        url = "http://api.geonames.org/countryCode?lat=%f&lng=%f&username=%s" % (lat,lon, GEONAMES_USERNAME)
         response = urllib2.urlopen(url) 
         country = response.read().strip()
         print "Countrycode = %s" % country
@@ -73,11 +86,6 @@ def process_clients():
         timestamp = (datetime.utcnow()-delta).isoformat()
         print "timestamp = %s" % timestamp
 
-        lat = float(message[5])
-        lon = float(message[7])
-
-        lat = int(lat / 100) + ((lat - (int((lat / 100)) * 100)) / 60)
-        lon = int(lon / 100) + ((lon - (int((lon / 100)) * 100)) / 60)
         speed = 1.85 * float(message[9])
 	
         output = {}
