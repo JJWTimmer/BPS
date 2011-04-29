@@ -27,11 +27,11 @@ class gps_decoder(object):
     gpsdict['serial'] = data[0]
     gpsdict['authorized_numbers'] = data[1]
     gpsdict['gprmc'] = ','.join(data[2:15])
-    gpsdict['fix_time'] = time.gmtime(data[3])
+    gpsdict['fix_time'] = time.gmtime(float(data[3]))
     gpsdict['receiver_warning'] = data[4]
-    gpsdict['float(data[5])itude'] = int(float(data[5]) / 100) + ((float(data[5]) - (int(data[5] / 100) * 100)) / 60)
+    gpsdict['latitude'] = int(float(data[5]) / 100) + ((float(data[5]) - (int(float(data[5]) / 100) * 100)) / 60)
     gpsdict['north_south'] = data[6]
-    gpsdict['float(data[7])gitude'] = int(float(data[7]) / 100) + ((float(data[7]) - (int(data[7] / 100) * 100)) / 60)
+    gpsdict['longitude'] = int(float(data[7]) / 100) + ((float(data[7]) - (int(float(data[7]) / 100) * 100)) / 60)
     gpsdict['east_west'] = data[8]
     gpsdict['speed_knots'] = data[9]
     gpsdict['speed_kmh'] = 1.85 * float(data[9])
