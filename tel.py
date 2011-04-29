@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from miniboa import TelnetServer
-import urllib2, time, socket, json, httplib
+import urllib2, time, socket, json, httplib, os
 from datetime import datetime, timedelta
 
 from notification import mailer
@@ -14,7 +14,7 @@ CLIENT_LIST = []
 MAILER = None
 
 #read config file
-def load_configuration(self, config_file):
+def load_configuration(config_file):
     file = open(config_file)
     config = json.load(file)
     file.close()
@@ -74,6 +74,7 @@ def process_clients():
         print "battery = %.1f%%" % rest
 
         if rest < 200:
+          print "sending mail"
           MAILER.low_battery(message[17][6:])
         
         # end battery calculation
@@ -117,7 +118,7 @@ def process_clients():
 #===============================================================
 
 if __name__ == "__main__":
-  config = load_configuration(os.path.dirname(__file__) + os.sep + 'config.json')
+  config = load_configuration('config.json')
   MAILER = mailer(config['from_address'], config['notify'])
   server = TelnetServer(port=config['port'], address=socket.gethostbyname(socket.gethostname()), on_connect=my_on_connect, on_disconnect=my_on_disconnect)
   #server = TelnetServer(port=9999, address='192.168.2.137', on_connect=my_on_connect, on_disconnect=my_on_disconnect)
