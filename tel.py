@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from miniboa import TelnetServer
-import urllib2, time, socket, json, httplib, os
+import urllib2, socket, os, json, time
 from datetime import datetime, timedelta
 
 from notification import mailer

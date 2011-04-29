@@ -1,4 +1,5 @@
-import urllib2
+import urllib2, json, httplib
+from datetime import timedelta, datetime
 
 class geonames(object):
   def __init__(self, name):
