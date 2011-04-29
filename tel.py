@@ -35,7 +35,7 @@ def process_clients():
       data = client.get_command()
       message = data.split(',')
 
-      print "%s:\n IMEI = %s" % (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), message[17][6:])
+      print "\n>>%s\n>>IMEI = %s" % (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), message[17][6:])
       
       gps_str = ','.join(message[2:15])
       if gps.chk_chksum(gps_str):
@@ -55,8 +55,10 @@ def process_clients():
         # begin battery calculation
         bat =  float(message[20][2:6]) - 3.65
         rest = bat / (4.15 - 3.65) * 100
-
-        print "battery = %.1f%%" % rest
+        charge = False
+        if message[21] == '1':
+          charge = True
+        print "battery = %.1f%%, charging = %s" % (rest,charge)
 
         if float(message[20][2:6]) < 3.7:
           print "WARNING, LOW BATTERY"
@@ -77,7 +79,7 @@ def process_clients():
         lat = int(lat / 100) + ((lat - (int((lat / 100)) * 100)) / 60)
         lon = int(lon / 100) + ((lon - (int((lon / 100)) * 100)) / 60)
         speed = 1.85 * float(message[9])
-
+	
         output = {}
         output['id'] = message[17][6:]
         output['timestamp'] = timestamp
