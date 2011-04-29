@@ -27,7 +27,7 @@ class gps_decoder(object):
     gpsdict['serial'] = data[0]
     gpsdict['authorized_numbers'] = data[1]
     gpsdict['gprmc'] = ','.join(data[2:15])
-    gpsdict['fix_time'] = time.gmtime(data[3])
+    gpsdict['fix_time'] = time.gmtime(float(data[3]))
     gpsdict['receiver_warning'] = data[4]
     gpsdict['float(data[5])itude'] = int(float(data[5]) / 100) + ((float(data[5]) - (int(data[5] / 100) * 100)) / 60)
     gpsdict['north_south'] = data[6]
