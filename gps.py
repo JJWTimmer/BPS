@@ -24,10 +24,10 @@ class gps_decoder(object):
     gpsdict['variation_east_west'] = data[14][0:1]
     gpsdict['checksum'] = data[14][-2:]
     gpsdict['imei'] = data[17][6:]
-    gpsdict['number_of_sattelites'] = data[18]
+    gpsdict['number_of_satellites'] = int(data[18])
     gpsdict['altitude'] = data[19]
     gpsdict['battery_power'] = float(data[20][2:6])
-    gpsdict['battery_percentage'] = float(data[20][2:6]) / (4.15 - 3.65) * 100
+    gpsdict['battery_percentage'] = float(data[20][2:6]) / 4.15 * 100
     gpsdict['charging'] = data[21]
     gpsdict['gprmc_length'] = data[22]
     gpsdict['crc16'] = data[23]
