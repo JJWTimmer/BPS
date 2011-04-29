@@ -1,5 +1,6 @@
- 
- class geonames(object):
+import urllib2
+
+class geonames(object):
   def __init__(self, name):
     self.name = name
   
