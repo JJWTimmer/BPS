@@ -4,12 +4,12 @@ import urllib2, time, socket, json, httplib, os
 from datetime import datetime, timedelta
 
 from notification import mailer
-import gps
+import gps, inet
 
 #globals
 JSON_DOMAIN = None
 JSON_PATH = None
-GEONAMES_USERNAME = None
+GEONAMES_SERVICE = None
 MAILER = None
 CLIENT_LIST = []
 
@@ -33,68 +33,38 @@ def process_clients():
   for client in CLIENT_LIST:
     if client.active and client.cmd_ready:
       data = client.get_command()
-      message = data.split(',')
-
-      print "\n>>%s\n>>IMEI = %s" % (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), message[17][6:])
+      gpsdecoder = gps.gps_decoder(data)
+      gpsdict = gpsdecoder.get_dict()
+      print gpsdict
       
-      gps_str = ','.join(message[2:15])
-      if gps.chk_chksum(gps_str):
-        print "GPS Data OK"
-        #===============
-        # calc location
+      print "\n>>%s\n>>IMEI = %s" % (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), gpsdict['imei'])
+      
+      if gpsdecoder.check_checksum():
+        print "GPS Data OK"       
         
-        lat = float(message[5])
-        lon = float(message[7])
-
-        lat = int(lat / 100) + ((lat - (int((lat / 100)) * 100)) / 60)
-        lon = int(lon / 100) + ((lon - (int((lon / 100)) * 100)) / 60)
-
-        
-        # end calc location
-        #===============
-        
-        
-        #===============
-        # begin country retrieval      
-        url = "http://api.geonames.org/countryCode?lat=%f&lng=%f&username=%s" % (lat,lon, GEONAMES_USERNAME)
-        response = urllib2.urlopen(url) 
-        country = response.read().strip()
+        country = GEONAMES_SERVICE.get_country(gpsdict['latitude'], gpsdict['longitude'])
         print "Countrycode = %s" % country
-        # end country retrieval
-        #===============
-        
-        
-        #===============
-        # begin battery calculation
-        bat =  float(message[20][2:6]) - 3.65
-        rest = bat / (4.15 - 3.65) * 100
-        charge = False
-        if message[21] == '1':
-          charge = True
-        print "battery = %.1f%%, charging = %s" % (rest,charge)
 
-        if float(message[20][2:6]) < 3.7:
+        charge = False
+        if gpsdict['charging'] == '1':
+          charge = True
+        print "battery = %.1f%% (%.1fV), charging = %s" % (gpsdict['battery_percentage'],gpsdict['battery_power'],charge)
+
+        if gpsdict['battery_power'] < 3.7:
           print "WARNING, LOW BATTERY"
           MAILER.low_battery(message[17][6:])
-        
-        # end battery calculation
-        #===============
-        
-        #================
-        # start json object building    
+           
         delta = timedelta(minutes=1)
         timestamp = (datetime.utcnow()-delta).isoformat()
         print "timestamp = %s" % timestamp
-
-        speed = 1.85 * float(message[9])
 	
         output = {}
-        output['id'] = message[17][6:]
+        output['id'] = gpsdict['imei']
         output['timestamp'] = timestamp
-        output['latitude'] = "%f" % lat
-        output['longitude'] = "%f" % lon
-        output['speed'] = "%f" % speed
-        output['direction'] = message[10]
+        output['latitude'] = "%f" % gpsdict['latitude']
+        output['longitude'] = "%f" % gpsdict['longitude']
+        output['speed'] = "%f" % gpsdict['speed_kmh']
+        output['direction'] = gpsdict['heading']
 
         enc = json.JSONEncoder(indent = 4)
         json_out = enc.encode(output)
@@ -104,9 +74,6 @@ def process_clients():
         conn.request("POST", JSON_PATH, json_out, headers)
         response = conn.getresponse()
         print "%s %s" %(response.status, response.reason)
-
-        # end json
-        #===============
         
       else:
         print "GPS Data Error"
@@ -117,7 +84,7 @@ if __name__ == "__main__":
   
   JSON_DOMAIN = config['json_domain']
   JSON_PATH = config['json_path']
-  GEONAMES_USERNAME = config['geonames_username']
+  GEONAMES_SERVICE = inet.geonames(config['geonames_username'])
   MAILER = mailer(config['from_address'], config['notify'])
   
   server = TelnetServer(port=config['port'], address=socket.gethostbyname(socket.gethostname()), on_connect=my_on_connect, on_disconnect=my_on_disconnect)
