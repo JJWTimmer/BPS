@@ -19,7 +19,7 @@ class cdb(object):
   def post_position(self, dict):
     #vps is one minute ahead of cdb
     delta = timedelta(minutes=1)
-    timestamp = (datetime.utcnow()-delta).isoformat()
+    timestamp = (datetime.utcnow()-delta).isoformat() + 'Z'
 
     output = {}
     output['id'] = dict['imei']
