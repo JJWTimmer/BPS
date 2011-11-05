@@ -31,5 +31,5 @@ Outputs a json file to the script, where id = imei of tracker and speed is in km
     "longitude": "4.xxxxxx", 
     "latitude": "52.xxxxxx", 
     "speed": "1.665000", 
-    "id": "354778031964284"
+    "id": "xxxxxxxxxxxxxxx"
 }
