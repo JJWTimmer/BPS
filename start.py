@@ -6,6 +6,6 @@ import gps
 
 if __name__ == "__main__":
 	argv[1:] = [
-		'-y', join(dirname(gps.__file__), "BPS.tac")
+		'-y', join(dirname(gps.__file__), "BPS.py")
 	]
 	run()
