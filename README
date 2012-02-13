@@ -8,22 +8,23 @@ port: listenport
 ip: ip to bind to
 smtp_server: authentication less smtp server for sending low battery emails
 from_address: from address in the emails sent by bps
-notify: comma separated list of emailaddresses to notify on low battery
+notify: comma separated list of emailaddresses to notify on low battery (can be empty string)
 json_domain: domainname where to post gps data without http:// and without trailing slash
 json_path: path relative to domain, ending in the scriptname to post to.
 geonames_username: username for geonames service to lookup countrycode.
 
 Usage:
 if code is in ~/bps:
-~$python bps start|stop|restart for use as deamon (only on linux/unix[/mac?])
-~$python bps run for use as console application (no output!) terminate with ctrl-c
+$twistd -y BPS.py  --> as daemon on linux
+$python start.py   --> as console app on windows
+$stop_bps.sh       --> to stop the linux daemon (make executable with $chmod +x stop_bps.sh)
 
 requirements:
-python 2.6 or 2.7
-smtp server on port 25 w/o authentication for bps
+python 2.6 or 2.7 with Twisted
+smtp server on port 25 w/o authentication
 
 Troubleshooting:
-Make sure ~/bps/log.txt is writable.
+Make sure ~/bps/BPS.log is writable.
 deamon does not work on windows.
 
 Outputs a json file to the script, where id = imei of tracker and speed is in km/h:
