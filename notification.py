@@ -7,11 +7,11 @@ class mailer(object):
 		self.send_addr = send_addr
 		self.recvs = recvs.split()
 		
-	def low_battery(self, imei):
+	def low_battery(self, name):
 		if len(self.recvs) > 0:
 			msg = MIMEText("LOW BATTERY")
 			
-			msg['Subject'] = 'BATTERY OF GPS WITH IMEI %s IS RUNNING LOW' % imei
+			msg['Subject'] = 'BATTERY OF %s IS RUNNING LOW' % name
 			msg['From'] = self.send_addr
 			msg['To'] = ','.join(self.recvs)
 

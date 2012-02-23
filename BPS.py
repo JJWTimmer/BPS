@@ -10,14 +10,12 @@ from twisted.protocols import basic
 from twisted.python import log
 
 from notification import mailer
-import gps, inet
+import gps, cdb, geonames
 
 #globals
 GEONAMES_SERVICE = None
 CDB = None
 MAILER = None
-IP = None
-
 
 def load_configuration(config_file):
 	'''
@@ -70,9 +68,12 @@ class BPSTelnetProtocol(basic.LineReceiver, TelnetProtocol):
 			if gpsdecoder.check_checksum():
 				log.msg("GPS Data OK")
 				
-				#check country
-				country = GEONAMES_SERVICE.get_country(gpsdict['latitude'], gpsdict['longitude'])
-				log.msg("Countrycode = %s" % country)
+				#check country (not used yet, so error = no problem)
+				try:
+					country = GEONAMES_SERVICE.get_country(gpsdict['latitude'], gpsdict['longitude'])
+					log.msg("Countrycode = %s" % country)
+				except Exception:
+					pass
 
 				#check battery
 				charge = False
@@ -82,7 +83,7 @@ class BPSTelnetProtocol(basic.LineReceiver, TelnetProtocol):
 
 				if float(gpsdict['battery_power']) < 3.7:
 					log.msg("WARNING, LOW BATTERY")
-					MAILER.low_battery(gpsdict['imei']) # refactor to lowBattery notification in general
+					MAILER.low_battery(CDB.get_name_from_imei(gpsdict['imei'])) # refactor to lowBattery notification in general
 				
 				#post position to cdb
 				response = CDB.post_position(gpsdict)
@@ -103,16 +104,13 @@ log.startLogging(open(os.path.dirname(gps.__file__) + os.sep + 'BPS.log', 'w'))
 log.msg("Config and logger loaded succesfully")
 
 #setup the cdb connetion
-CDB = inet.cdb(config['json_domain'], config['json_path'])
+CDB = cdb.cdb(config['json_domain'], config['json_path'], config['vehicle_service'], config['vehicle_app'], config['vehicle_password'], config['vehicle_refresh'])
 
 #the Geonames country lookup
-GEONAMES_SERVICE = inet.geonames(config['geonames_username'])
+GEONAMES_SERVICE = geonames.geonames(config['geonames_username'])
 
 #the email notifier
 MAILER = mailer(config['smtp_server'], config['from_address'], config['notify'])
-
-#the IP to bind to
-IP = config['ip']
 
 #twisted code
 factory = ServerFactory()

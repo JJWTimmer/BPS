@@ -14,13 +14,13 @@ json_path: path relative to domain, ending in the scriptname to post to.
 geonames_username: username for geonames service to lookup countrycode.
 
 Usage:
-if code is in ~/bps:
-$twistd -y BPS.py  --> as daemon on linux
-$python start.py   --> as console app on windows
-$stop_bps.sh       --> to stop the linux daemon (make executable with $chmod +x stop_bps.sh)
+$twistd -y BPS.py 	--> as daemon on linux
+$./start.sh			--> as daemon on linux (make executable with $chmod +x stop_bps.sh)
+$python start.py	--> as console app on windows
+$./stop.sh			--> to stop the linux daemon (make executable with $chmod +x stop_bps.sh)
 
 requirements:
-python 2.6 or 2.7 with Twisted
+python 2.6 or 2.7 with Twisted and suds (on Ubuntu: python-twisted python-suds)
 smtp server on port 25 w/o authentication
 
 Troubleshooting:
