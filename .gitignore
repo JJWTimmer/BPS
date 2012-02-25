@@ -3,5 +3,5 @@ log.txt
 .svn
 *.log
 *.pid
-data.txt
+data*.txt
 config.json

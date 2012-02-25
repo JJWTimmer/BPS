@@ -10,7 +10,7 @@ class gps_decoder(object):
 			gpsdict['serial'] = data[0]
 			gpsdict['authorized_numbers'] = data[1]
 			gpsdict['gprmc'] = ','.join(data[2:15])
-			gpsdict['fix_time'] = time.gmtime(float(data[3]))
+			gpsdict['fix_time'] = self.make_time(data[3])
 			gpsdict['receiver_warning'] = data[4]
 			gpsdict['latitude'] = int(float(data[5]) / 100) + ((float(data[5]) - (int(float(data[5]) / 100) * 100)) / 60)
 			gpsdict['north_south'] = data[6]
@@ -19,10 +19,12 @@ class gps_decoder(object):
 			gpsdict['speed_knots'] = data[9]
 			gpsdict['speed_kmh'] = 1.85 * float(data[9])
 			gpsdict['heading'] = data[10]
-			gpsdict['datestamp'] = data[11]
+			gpsdict['datestamp'] = self.make_date(data[11])
 			gpsdict['variation'] = data[12]
 			gpsdict['variation_east_west'] = data[14][0:1]
 			gpsdict['checksum'] = data[14][-2:]
+			gpsdict['gps_signal'] = data[15]
+			gpsdict['command'] = data[16]
 			gpsdict['imei'] = data[17][6:]
 			gpsdict['number_of_satellites'] = int(data[18])
 			gpsdict['altitude'] = data[19]
@@ -58,3 +60,9 @@ class gps_decoder(object):
 	#create gps dict object
 	def get_dict(self):
 		return self.dict
+	
+	def make_time(self, timestr):
+		return datetime.time(hour=int(timestr[0:2]), minute=int(timestr[2:4]), second=int(timestr[4:6]))
+		
+	def make_date(self, datestr):
+		return datetime.date(day=int(datestr[0:2]), month=int(datestr[2:4]), year=2000+int(datestr[4:6]))

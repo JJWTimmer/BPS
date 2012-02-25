@@ -26,9 +26,7 @@ class cdb(object):
 		self.get_vehicles()
 	
 	def post_position(self, dict):
-		#vps is one minute ahead of cdb
-		delta = timedelta(minutes=1)
-		timestamp = (datetime.utcnow()-delta).isoformat() + 'Z'
+		timestamp = datetime.utcnow().isoformat() + 'Z'
 
 		output = {}
 		output['id'] = dict['imei']
@@ -58,3 +56,4 @@ class cdb(object):
 		for vehicle in self.vehicles:
 		   if 'vt_gps_imei' in vehicle and vehicle['vt_gps_imei'] == imei:
 			   return vehicle['vt_naam']
+		return "UNKNOWN GPS"

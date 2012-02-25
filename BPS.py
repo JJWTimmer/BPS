@@ -10,12 +10,12 @@ from twisted.protocols import basic
 from twisted.python import log
 
 from notification import mailer
-import gps, cdb, geonames
+import gps, cdb, mmc
 
 #globals
-GEONAMES_SERVICE = None
 CDB = None
 MAILER = None
+MMC = None
 
 def load_configuration(config_file):
 	'''
@@ -26,7 +26,7 @@ def load_configuration(config_file):
 	file.close()
 
 	return config
-		
+
 class BPSTelnetProtocol(basic.LineReceiver, TelnetProtocol):
 	'''
 	I am the BPS Telnet Protocol for twisted. I act on received lines via telnet
@@ -61,8 +61,8 @@ class BPSTelnetProtocol(basic.LineReceiver, TelnetProtocol):
 			gpsdict = gpsdecoder.get_dict()
 			
 			log.msg("received data from: %s" % self.transport.getPeer() )
-			log.msg("Timestamp: %s" % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-			log.msg("IMEI: %s" % gpsdict['imei'])
+			log.msg("Timestamp: %s" % datetime.utcnow().isoformat() + 'Z')
+			log.msg("VEHICLE: %s; IMEI: %s" % (CDB.get_name_from_imei(gpsdict['imei']), gpsdict['imei']) )
 			
 			#check position data for errors
 			if gpsdecoder.check_checksum():
@@ -70,10 +70,10 @@ class BPSTelnetProtocol(basic.LineReceiver, TelnetProtocol):
 				
 				#check country (not used yet, so error = no problem)
 				try:
-					country = GEONAMES_SERVICE.get_country(gpsdict['latitude'], gpsdict['longitude'])
-					log.msg("Countrycode = %s" % country)
-				except Exception:
-					pass
+					country = MMC.get(gpsdict['mobile_country_code'])
+					log.msg("Country = %s" % country)
+				except Exception as e:
+					log.msg("ERROR in get_country")
 
 				#check battery
 				charge = False
@@ -99,15 +99,15 @@ class BPSTelnetProtocol(basic.LineReceiver, TelnetProtocol):
 # read the config file
 config = load_configuration(os.path.dirname(gps.__file__) + os.sep + 'config.json')
 
+#load mcc codes
+MMC = mmc.mmc()
+
 # setup logging
 log.startLogging(open(os.path.dirname(gps.__file__) + os.sep + 'BPS.log', 'w'))
 log.msg("Config and logger loaded succesfully")
 
 #setup the cdb connetion
 CDB = cdb.cdb(config['json_domain'], config['json_path'], config['vehicle_service'], config['vehicle_app'], config['vehicle_password'], config['vehicle_refresh'])
-
-#the Geonames country lookup
-GEONAMES_SERVICE = geonames.geonames(config['geonames_username'])
 
 #the email notifier
 MAILER = mailer(config['smtp_server'], config['from_address'], config['notify'])

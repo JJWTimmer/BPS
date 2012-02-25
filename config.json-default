@@ -11,7 +11,5 @@
 	"vehicle_service"	: "http://domain.com/path/to/wsdl.xml",
 	"vehicle_app"		: "appname",
 	"vehicle_password"	: "password",
-	"vehicle_refresh"	: 60,
-	
-    "geonames_username"	: "username"
+	"vehicle_refresh"	: 60
 }
