@@ -1,21 +1,29 @@
 #!/usr/bin/env python
-import urllib2, socket, os, json, time, logging, sys
+import urllib2, socket, os, json, time, logging, sys, threading
 from datetime import datetime, timedelta
 
 from twisted.conch.telnet import TelnetTransport, TelnetProtocol
+from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 from twisted.application.internet import TCPServer
 from twisted.application.service import Application
 from twisted.protocols import basic
 from twisted.python import log
+from twisted.internet.threads import deferToThread
 
 from notification import mailer
-import gps, cdb, mmc
+import gps, cdb, blam
+from util import enum
 
-#globals
+#----------------------------------- Globals ---------------------------------#
 CDB = None
 MAILER = None
-MMC = None
+LOWBAT = None
+LASTPOS = None
+BLAM = None
+BATTERY_THRESHOLD = None
+
+GPS_STATUS = enum(NONE=0, CHARGING=1, BATTERY=2, EMPTY=3, SILENCE=4)
 
 def load_configuration(config_file):
 	'''
@@ -27,6 +35,15 @@ def load_configuration(config_file):
 
 	return config
 
+#----------------------------------- Background checker------------------------#
+def monitor():
+	silent_vehicles = [k for (k,v) in LASTPOS.items() if v < (datetime.now()-timedelta(minutes=5))]
+	for v in silent_vehicles:
+		del LASTPOS[v]
+	map(lambda v: BLAM.set_gps_status(v, GPS_STATUS.SILENCE), silent_vehicles)
+	reactor.callLater(30, monitor)
+#----------------------------------- Protocol ---------------------------------#
+	
 class BPSTelnetProtocol(basic.LineReceiver, TelnetProtocol):
 	'''
 	I am the BPS Telnet Protocol for twisted. I act on received lines via telnet
@@ -60,62 +77,86 @@ class BPSTelnetProtocol(basic.LineReceiver, TelnetProtocol):
 			gpsdecoder = gps.gps_decoder(line)
 			gpsdict = gpsdecoder.get_dict()
 			
-			log.msg("received data from: %s" % self.transport.getPeer() )
-			log.msg("Timestamp: %s" % datetime.utcnow().isoformat() + 'Z')
-			log.msg("VEHICLE: %s; IMEI: %s" % (CDB.get_name_from_imei(gpsdict['imei']), gpsdict['imei']) )
-			
 			#check position data for errors
-			if gpsdecoder.check_checksum():
-				log.msg("GPS Data OK")
+			if gpsdecoder.check_checksum():				
+				vehicle = CDB.get_name_from_imei(gpsdict['imei'])
 				
-				#check country (not used yet, so error = no problem)
-				try:
-					country = MMC.get(gpsdict['mobile_country_code'])
-					log.msg("Country = %s" % country)
-				except Exception as e:
-					log.msg("ERROR in get_country")
-
 				#check battery
-				charge = False
-				if gpsdict['charging'] == '1':
-					charge = True
-					log.msg("battery = %.1f%% (%.1fV), charging = %s" % (gpsdict['battery_percentage'],gpsdict['battery_power'],charge))
-
-				if float(gpsdict['battery_power']) < 3.7:
-					log.msg("WARNING, LOW BATTERY")
-					MAILER.low_battery(CDB.get_name_from_imei(gpsdict['imei'])) # refactor to lowBattery notification in general
+				status = GPS_STATUS.BATTERY
 				
+				if gpsdict['charging'] == '1':
+					status = GPS_STATUS.CHARGING
+				elif float(gpsdict['battery_power']) < BATTERY_THRESHOLD:			
+					status = GPS_STATUS.EMPTY
+					
+					if MAILER:
+						#remove expired warnings from the dictionary
+						LOWBAT = dict([(k,v) for (k,v) in LOWBAT.items() if v > (datetime.now()-timedelta(minutes=15))])
+					
+						#if not already send, send the notification
+						if not vehicle in LOWBAT.keys():
+							LOWBAT[vehicle] = datetime.now()
+							MAILER.low_battery(vehicle)
+				
+				#update last received time
+				LASTPOS[vehicle] = datetime.now()
+
 				#post position to cdb
 				response = CDB.post_position(gpsdict)
-				log.msg("%s %s" %(response.status, response.reason))
 				
+				#update the BLAM db
+				BLAM.set_gps_status(vehicle, status)				
 			else:
 				log.msg("GPS Data Error")
 		except Exception as e:
 			log.msg("ERROR: %s" % str(e))
 
 #----------------------------------- START OF APP ---------------------------------#
+def stopMonitor():
+	MONITOR.stop()
+#----------------------------------- START OF APP ---------------------------------#
 
-# read the config file
-config = load_configuration(os.path.dirname(gps.__file__) + os.sep + 'config.json')
-
-#load mcc codes
-MMC = mmc.mmc()
+thisdir = os.path.dirname(__file__)
+if not thisdir == '':
+	thisdir += os.sep
 
 # setup logging
-log.startLogging(open(os.path.dirname(gps.__file__) + os.sep + 'BPS.log', 'w'))
-log.msg("Config and logger loaded succesfully")
+log.startLogging(open(thisdir + 'BPS.log', 'w'))
+log.msg("Logger loaded")
+
+# read the config file
+config = load_configuration(thisdir + 'config.json')
+log.msg("Config loaded")
 
 #setup the cdb connetion
 CDB = cdb.cdb(config['json_domain'], config['json_path'], config['vehicle_service'], config['vehicle_app'], config['vehicle_password'], config['vehicle_refresh'])
+log.msg("cdb connected")
 
-#the email notifier
-MAILER = mailer(config['smtp_server'], config['from_address'], config['notify'])
+#connect to blam
+BLAM = blam.blam(config['mysql_server_host'],config['mysql_server_port'],config['mysql_server_user'],config['mysql_server_pw'],config['mysql_blam_db'])
+log.msg("blam connected")
+
+#if there are receivers create a mailer
+if config['notify']:
+	MAILER = mailer(config['smtp_server'], config['from_address'], config['notify'])
+	log.msg("mailer created")
+	
+	LOWBAT = {}
+
+#set the battery voltage that triggers lowbattery
+BATTERY_THRESHOLD = float(config['battery_threshold'])
+
+#Dict for last time position was received
+LASTPOS = {}
 
 #twisted code
 factory = ServerFactory()
 factory.protocol = lambda: TelnetTransport(BPSTelnetProtocol)
-service = TCPServer(config['port'], factory)
 
-application = Application("Telnet GPS Server")
+application = Application("BPS")
+
+service = TCPServer(config['port'], factory)
 service.setServiceParent(application)
+
+reactor.callLater(30, monitor)
+#reactor.run()

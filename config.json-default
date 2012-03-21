@@ -1,6 +1,14 @@
 {
     "port"				: 9999,
 	
+	"battery_threshold"	: 3.73,
+	
+	"mysql_server_host"	: "localhost",
+	"mysql_server_port"	: 3306,
+	"mysql_server_user"	: "bps",
+	"mysql_server_pw"	: "bpspw",
+	"mysql_blam_db"		: "blam",
+	
     "smtp_server"		: "192.168.0.111",
     "from_address"		: "bps@domain.com",
     "notify"			: "admin@domain.com,admin2@domain.com",

@@ -29,7 +29,7 @@ class gps_decoder(object):
 			gpsdict['number_of_satellites'] = int(data[18])
 			gpsdict['altitude'] = data[19]
 			gpsdict['battery_power'] = float(data[20][2:6])
-			gpsdict['battery_percentage'] = (1 - (4.15 - float(gpsdict['battery_power'])) / (4.15 - 3.65)) * 100
+			gpsdict['battery_percentage'] = (1 - (4.15 - float(gpsdict['battery_power'])) / (4.2 - 3.6)) * 100 #max 4.2V and min 3.6V
 			gpsdict['charging'] = data[21]
 			gpsdict['gprmc_length'] = data[22]
 			gpsdict['crc16'] = data[23]
@@ -40,7 +40,7 @@ class gps_decoder(object):
 
 			self.dict = gpsdict
 		else:
-			raise Exception("Invalid gps data")
+			raise Exception("Invalid gps data <%s>" % self.gpsstring)
 	  
 	#gps checksum calc
 	def check_checksum(self):
