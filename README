@@ -23,8 +23,8 @@ vehicle_refresh: seconds to cache the vehicle data before polling for changed IM
 
 Usage:
 $twistd -y BPS.py 	--> as daemon on linux
-$./start.sh			--> as daemon on linux (make executable with $chmod +x stop_bps.sh)
-$./stop.sh			--> to stop the linux daemon (make executable with $chmod +x stop_bps.sh)
+$./start.sh			--> as daemon on linux (make executable with $chmod +x start.sh)
+$./stop.sh			--> to stop the linux daemon (make executable with $chmod +x stop.sh)
 $python start.py	--> as console app on windows
 
 requirements:
