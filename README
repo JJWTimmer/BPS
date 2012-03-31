@@ -5,27 +5,35 @@ For use with Xexun tk102-2 trackers.
 
 Configfile:
 port: listenport
-ip: ip to bind to
-smtp_server: authentication less smtp server for sending low battery emails
+battery_threshold : voltage at which a low battery action should be taken
+mysql_server_host: db host
+mysql_server_port: db port
+mysql_server_user: db user
+mysql_server_pw: db password
+mysql_blam_db: db name of the BLAM application
+smtp_server: authentication-less smtp server for sending low battery emails, on port 25
 from_address: from address in the emails sent by bps
-notify: comma separated list of emailaddresses to notify on low battery (can be empty string)
+notify: comma separated list of emailaddresses to notify on low battery (can be empty string to disable)
 json_domain: domainname where to post gps data without http:// and without trailing slash
 json_path: path relative to domain, ending in the scriptname to post to.
-geonames_username: username for geonames service to lookup countrycode.
+vehicle_service: webservice where to get the imei to vehicle data
+vehicle_app: name of the webservice application
+vehicle_password: identification password for the webservice
+vehicle_refresh: seconds to cache the vehicle data before polling for changed IMEI numbers
 
 Usage:
 $twistd -y BPS.py 	--> as daemon on linux
 $./start.sh			--> as daemon on linux (make executable with $chmod +x stop_bps.sh)
-$python start.py	--> as console app on windows
 $./stop.sh			--> to stop the linux daemon (make executable with $chmod +x stop_bps.sh)
+$python start.py	--> as console app on windows
 
 requirements:
-python 2.6 or 2.7 with Twisted and suds (on Ubuntu: python-twisted python-suds)
-smtp server on port 25 w/o authentication
+python 2.6 or 2.7 pythonlibs: Twisted, suds, MySQLdb (on Ubuntu: python-twisted python-suds python-mysqldb)
+localhost smtp server on port 25 w/o authentication
 
 Troubleshooting:
 Make sure ~/bps/BPS.log is writable.
-deamon does not work on windows.
+Make sure start.sh and stop.sh are executable
 
 Outputs a json file to the script, where id = imei of tracker and speed is in km/h:
 {
